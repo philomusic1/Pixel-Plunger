@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Plunger</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #1c1c1c;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background-color: #333;
+        }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 40px;
+            font-family: 'Arial', sans-serif;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+            display: none;
+        }
+        .game-button {
+            background-color: #ff6347;
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .game-button:hover {
+            background-color: #ff4500;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+<div id="gameOver">
+    Game Over! <br>
+    <button class="game-button" onclick="startGame()">Play Again</button>
+</div>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const plungerWidth = 50;
+    const plungerHeight = 50;
+    const gravity = 0.8;
+    const jumpStrength = -15;
+    const plungerSpeed = 5;
+    const obstacleWidth = 50;
+    const obstacleHeight = 50;
+    const obstacleSpeed = 2;
+
+    let plunger = {
+        x: canvas.width / 2 - plungerWidth / 2,
+        y: canvas.height - plungerHeight - 10,
+        dx: 0,
+        dy: 0
+    };
+
+    let obstacles = [];
+    let score = 0;
+    let gameOver = false;
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft" || e.key === "a") {
+            plunger.dx = -plungerSpeed;
+        } else if (e.key === "ArrowRight" || e.key === "d") {
+            plunger.dx = plungerSpeed;
+        } else if (e.key === " " && !gameOver) { // Space bar to jump
+            if (plunger.y === canvas.height - plungerHeight - 10) {
+                plunger.dy = jumpStrength;
+            }
+        }
+    });
+
+    document.addEventListener("keyup", () => {
+        plunger.dx = 0;
+    });
+
+    function createObstacle() {
+        let x = Math.random() * (canvas.width - obstacleWidth);
+        obstacles.push({ x: x, y: -obstacleHeight });
+    }
+
+    function movePlunger() {
+        plunger.x += plunger.dx;
+        plunger.y += plunger.dy;
+
+        if (plunger.x < 0) plunger.x = 0;
+        if (plunger.x + plungerWidth > canvas.width) plunger.x = canvas.width - plungerWidth;
+
+        if (plunger.y < canvas.height - plungerHeight - 10) {
+            plunger.dy += gravity; // falling
+        } else {
+            plunger.y = canvas.height - plungerHeight - 10;
+            plunger.dy = 0; // reset falling
+        }
+    }
+
+    function moveObstacles() {
+        for (let i = 0; i < obstacles.length; i++) {
+            obstacles[i].y += obstacleSpeed;
+            if (obstacles[i].y > canvas.height) {
+                obstacles.splice(i, 1);
+                score++;
+                i--;
+            }
+        }
+    }
+
+    function checkCollisions() {
+        for (let i = 0; i < obstacles.length; i++) {
+            if (plunger.x < obstacles[i].x + obstacleWidth &&
+                plunger.x + plungerWidth > obstacles[i].x &&
+                plunger.y < obstacles[i].y + obstacleHeight &&
+                plunger.y + plungerHeight > obstacles[i].y) {
+                gameOver = true;
+            }
+        }
+    }
+
+    function drawPlunger() {
+        ctx.fillStyle = "#ff6347";
+        ctx.fillRect(plunger.x, plunger.y, plungerWidth, plungerHeight);
+    }
+
+    function drawObstacles() {
+        ctx.fillStyle = "#228B22";
+        for (let i = 0; i < obstacles.length; i++) {
+            ctx.fillRect(obstacles[i].x, obstacles[i].y, obstacleWidth, obstacleHeight);
+        }
+    }
+
+    function drawScore() {
+        ctx.fillStyle = "#fff";
+        ctx.font = "20px Arial";
+        ctx.fillText("Score: " + score, 10, 30);
+    }
+
+    function startGame() {
+        plunger.x = canvas.width / 2 - plungerWidth / 2;
+        plunger.y = canvas.height - plungerHeight - 10;
+        plunger.dx = 0;
+        plunger.dy = 0;
+        obstacles = [];
+        score = 0;
+        gameOver = false;
+        document.getElementById("gameOver").style.display = "none";
+        animate();
+    }
+
+    function animate() {
+        if (gameOver) {
+            document.getElementById("gameOver").style.display = "block";
+            return;
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        movePlunger();
+        moveObstacles();
+        checkCollisions();
+
+        drawPlunger();
+        drawObstacles();
+        drawScore();
+
+        if (Math.random() < 0.02) createObstacle(); // random obstacle generation
+
+        requestAnimationFrame(animate);
+    }
+
+    startGame();
+</script>
+
+</body>
+</html>
