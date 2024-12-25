@@ -59,7 +59,6 @@
     const plungerSpeed = 5;
     const obstacleWidth = 50;
     const obstacleHeight = 50;
-    const obstacleSpeed = 2;
 
     let plunger = {
         x: canvas.width / 2 - plungerWidth / 2,
@@ -70,7 +69,9 @@
 
     let obstacles = [];
     let score = 0;
+    let highScore = localStorage.getItem("highScore") ? parseInt(localStorage.getItem("highScore")) : 0;
     let gameOver = false;
+    let obstacleSpeed = 2;
 
     document.addEventListener("keydown", (e) => {
         if (e.key === "ArrowLeft" || e.key === "a") {
@@ -146,6 +147,7 @@
         ctx.fillStyle = "#fff";
         ctx.font = "20px Arial";
         ctx.fillText("Score: " + score, 10, 30);
+        ctx.fillText("High Score: " + highScore, canvas.width - 150, 30);
     }
 
     function startGame() {
@@ -156,12 +158,24 @@
         obstacles = [];
         score = 0;
         gameOver = false;
+        obstacleSpeed = 2;
         document.getElementById("gameOver").style.display = "none";
         animate();
     }
 
+    function updateDifficulty() {
+        // Increase difficulty based on score
+        if (score % 5 === 0 && obstacleSpeed < 10) {
+            obstacleSpeed += 0.5; // Increase speed after every 5 points
+        }
+    }
+
     function animate() {
         if (gameOver) {
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem("highScore", highScore); // Save high score
+            }
             document.getElementById("gameOver").style.display = "block";
             return;
         }
@@ -171,6 +185,8 @@
         movePlunger();
         moveObstacles();
         checkCollisions();
+
+        updateDifficulty(); // Adjust difficulty based on score
 
         drawPlunger();
         drawObstacles();
